@@ -1,3 +1,5 @@
+import pytest
+from src.calculator import add, subtract, multiply, divide
 """
 Unit Tests for Calculator
 Students start with 2 passing tests, then add more
@@ -34,3 +36,22 @@ class TestMultiplyDivideWithValidation:
             divide("10", 2)
 
 # TODO: Students will add TestMultiplyDivide class
+from src.calculator import power, square_root   # make sure these are imported at the top
+
+class TestAdvancedOperations:
+    def test_power_positive_numbers(self):
+        assert power(2, 3) == 8
+        assert power(5, 2) == 25
+
+    def test_power_zero_exponent(self):
+        assert power(5, 0) == 1
+        assert power(0, 0) == 1
+
+    def test_square_root_positive_numbers(self):
+        assert square_root(4) == 2
+        assert square_root(9) == 3
+
+    def test_square_root_negative_raises_error(self):
+        import pytest
+        with pytest.raises(ValueError, match="Cannot calculate square root of negative number"):
+            square_root(-4)
