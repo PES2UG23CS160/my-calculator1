@@ -1,54 +1,73 @@
 """
-Command Line Interface for Calculator
-Example: python src/cli.py add 5 3
+Integration Tests - CLI + Calculator Working Together
 """
 
-import sys
-import click
-from calculator import add, subtract, multiply, divide, power, square_root
+from click.testing import CliRunner
+import pytest
 
-@click.command()
-@click.argument("operation")
-@click.argument("num1", type=float)
-@click.argument("num2", type=float, required=False)
-def calculate(operation, num1, num2=None):
-    """Simple calculator CLI"""
+class TestCLIIntegration:
+    """Test CLI application integrating with calculator module (in-process)"""
 
-    try:
-        # Unary operations
-        if operation in ["square_root", "sqrt"]:
-            result = square_root(num1)
+    def run_cli(self, *args):
+        """Invoke Click CLI in-process so coverage is measured."""
+        from src.cli import calculate
 
-        # Binary operations
-        else:
-            if num2 is None:
-                click.echo("Error: This operation requires two numbers.")
-                sys.exit(1)
+        runner = CliRunner()
+        return runner.invoke(calculate, list(args))
 
-            if operation == "add":
-                result = add(num1, num2)
-            elif operation == "subtract":
-                result = subtract(num1, num2)
-            elif operation == "multiply":
-                result = multiply(num1, num2)
-            elif operation == "divide":
-                result = divide(num1, num2)
-            elif operation == "power":
-                result = power(num1, num2)
-            else:
-                click.echo(f"Unknown operation: {operation}")
-                sys.exit(1)
+    def test_cli_add_integration(self):
+        res = self.run_cli("add", "5", "3")
+        assert res.exit_code == 0
+        assert res.output.strip() == "8"
 
-        click.echo(f"Result: {result}")
+    def test_cli_multiply_integration(self):
+        res = self.run_cli("multiply", "4", "7")
+        assert res.exit_code == 0
+        assert res.output.strip() == "28"
 
-    except ZeroDivisionError:
-        click.echo("Error: Division by zero is not allowed.")
-        sys.exit(1)
-    except Exception as e:
-        click.echo(f"Error: {e}")
-        sys.exit(1)
+    def test_cli_divide_integration(self):
+        res = self.run_cli("divide", "15", "3")
+        assert res.exit_code == 0
+        assert res.output.strip() == "5"
+
+    def test_cli_sqrt_integration(self):
+        res = self.run_cli("sqrt", "16")
+        assert res.exit_code == 0
+        assert res.output.strip() == "4"
+
+    def test_cli_error_handling_integration(self):
+        res = self.run_cli("divide", "10", "0")
+        assert res.exit_code == 1
+        assert "Division by zero" in res.output  # updated to match CLI
+
+    def test_cli_invalid_operation_integration(self):
+        res = self.run_cli("invalid", "1", "2")
+        assert res.exit_code == 1
+        assert "Unknown operation" in res.output
 
 
-if __name__ == "__main__":
-    # Pylint false positive: Click injects args at runtime
-    calculate()  # pylint: disable=no-value-for-parameter
+class TestCalculatorModuleIntegration:
+    """Test calculator module functions work together"""
+
+    def test_chained_operations(self):
+        """Test using results from one operation in another"""
+        from src.calculator import add, multiply, divide
+
+        # Calculate (5 + 3) * 2 / 4
+        step1 = add(5, 3)  # 8
+        step2 = multiply(step1, 2)  # 16
+        step3 = divide(step2, 4)  # 4
+
+        assert step3 == 4.0
+
+    def test_complex_calculation_integration(self):
+        """Test complex calculation using multiple functions"""
+        from src.calculator import power, square_root, add
+
+        # Calculate sqrt(3^2 + 4^2) = 5 (Pythagorean theorem)
+        a_squared = power(3, 2)  # 9
+        b_squared = power(4, 2)  # 16
+        sum_squares = add(a_squared, b_squared)  # 25
+        hypotenuse = square_root(sum_squares)  # 5
+
+        assert hypotenuse == 5.0
