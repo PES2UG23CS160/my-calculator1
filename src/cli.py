@@ -50,4 +50,5 @@ def calculate(operation, num1, num2=None):
 
 
 if __name__ == "__main__":
-    calculate()
+    # Pylint false positive: Click injects args at runtime
+    calculate()  # pylint: disable=no-value-for-parameter
